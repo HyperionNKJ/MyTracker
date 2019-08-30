@@ -145,7 +145,7 @@ public class FloatingViewService extends Service implements View.OnClickListener
                 if (hasEmptyInput()) {
                     Toast.makeText(this, "Please include both name and amount", Toast.LENGTH_SHORT).show();
                 } else if (isNonNumerical(amountInput.getText().toString())) {
-                    Toast.makeText(this, "Amount should be a number.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Amount should be a number", Toast.LENGTH_SHORT).show();
                 } else {
                     addEntry();
                 }

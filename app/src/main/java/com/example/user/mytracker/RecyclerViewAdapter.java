@@ -95,12 +95,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                 dateTotalExpenses += Double.parseDouble(amount);
             }
 
-            holder.dateTotal.setText(String.valueOf(dateTotalExpenses));
+            holder.dateTotal.setText("Total: " + formatAmount(String.valueOf(dateTotalExpenses)));
         } else { // SHOPPING
             String entry = list.get(position);
             String[] output = entry.split(" = ");
             holder.name.setText(output[0]);
-            holder.amount.setText(output[1]);
+            holder.amount.setText(formatAmount(output[1]));
         }
     }
 
@@ -109,9 +109,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         View view = LayoutInflater.from(mContext).inflate(R.layout.recycler_row_shopping, holder.dateEntries, false);
         // Second, initialize name and amount
         ((TextView) view.findViewById(R.id.tv_name)).setText(name);
-        ((TextView) view.findViewById(R.id.tv_amount)).setText(amount);
+        ((TextView) view.findViewById(R.id.tv_amount)).setText(formatAmount(amount));
         // Third, append view (entry) onto date's entries
         holder.dateEntries.addView(view);
+    }
+
+    private String formatAmount(String amount) {
+        return String.format("%,d", Math.round(Double.parseDouble(amount))) + " KRW";
     }
 
        /* String entry = list.get(position);
