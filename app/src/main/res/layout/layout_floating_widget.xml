@@ -30,7 +30,7 @@
                     android:id="@+id/collapsed_iv"
                     android:layout_width="38dp"
                     android:layout_height="38dp"
-                    android:src="@drawable/icon_mytracker"/>
+                    android:src="@drawable/circle_icon"/>
 
             </LinearLayout>
 
@@ -39,7 +39,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_marginLeft="47dp"
-                android:src="@drawable/close" />
+                android:src="@drawable/circle_close" />
         </RelativeLayout>
 
         <!-- this is the expanded layout -->

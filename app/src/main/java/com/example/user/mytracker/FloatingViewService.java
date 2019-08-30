@@ -12,9 +12,14 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Locale;
 
 public class FloatingViewService extends Service implements View.OnClickListener {
     private WindowManager mWindowManager;
@@ -137,13 +142,28 @@ public class FloatingViewService extends Service implements View.OnClickListener
                 stopSelf();
                 break;
             case R.id.addButton:
-                if (nameInput.getText().toString().equals("") || amountInput.getText().toString().equals("")) {
+                if (hasEmptyInput()) {
                     Toast.makeText(this, "Please include both name and amount", Toast.LENGTH_SHORT).show();
+                } else if (isNonNumerical(amountInput.getText().toString())) {
+                    Toast.makeText(this, "Amount should be a number.", Toast.LENGTH_SHORT).show();
                 } else {
                     addEntry();
                 }
                 break;
         }
+    }
+
+    private boolean hasEmptyInput() {
+        return nameInput.getText().toString().equals("") || amountInput.getText().toString().equals("");
+    }
+
+    private boolean isNonNumerical(String s) {
+        try {
+            Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            return true;
+        }
+        return false;
     }
 
     private void addEntry() {
@@ -154,7 +174,7 @@ public class FloatingViewService extends Service implements View.OnClickListener
         try {
             if (trackerTypeRG.getCheckedRadioButtonId() == R.id.rb_expenses) {
                 fos = openFileOutput("Expenses List", MODE_APPEND);
-                fos.write((name + " = " + amount + "\n").getBytes());
+                fos.write((name + " = " + amount + " == " + getDate() + "\n").getBytes());
                 Toast.makeText(this, "Added to expenses list!\nYou bought '" + name + "' for " + amount + " KRW", Toast.LENGTH_LONG).show();
             } else {
                 fos = openFileOutput("Shopping List", MODE_APPEND);
@@ -174,5 +194,10 @@ public class FloatingViewService extends Service implements View.OnClickListener
                 }
             }
         }
+    }
+
+    private String getDate() {
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("dd-MM-yyyy").withLocale(Locale.KOREA);
+        return formatter.print(new LocalDate());
     }
 }
