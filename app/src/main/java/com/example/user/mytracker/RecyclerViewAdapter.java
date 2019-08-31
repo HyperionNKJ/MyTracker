@@ -1,11 +1,16 @@
 package com.example.user.mytracker;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -99,65 +104,69 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         } else { // SHOPPING
             String entry = list.get(position);
             String[] output = entry.split(" = ");
-            holder.name.setText(output[0]);
-            holder.amount.setText((output.length == 2) ? output[1] : ""); // amount could be empty, because 'space' is allowed
+            String name = output[0];
+            String amount = (output.length == 2) ? output[1] : ""; // amount could be empty, because 'space' is allowed
+
+            holder.name.setText(name);
+            holder.amount.setText(amount);
+            holder.name.setOnClickListener(getOnClickListener(name, amount));
         }
     }
 
     private void appendEntryUnderDate(String name, String amount, final ViewHolder holder) {
         // First, get the view by reusing recycler_row_shopping's layout
         View view = LayoutInflater.from(mContext).inflate(R.layout.recycler_row_shopping, holder.dateEntries, false);
-        // Second, initialize name and amount
-        ((TextView) view.findViewById(R.id.tv_name)).setText(name);
-        ((TextView) view.findViewById(R.id.tv_amount)).setText(formatAmount(amount));
+        // Second, initialize and set name and amount
+        TextView mName = view.findViewById(R.id.tv_name);
+        TextView mAmount = view.findViewById(R.id.tv_amount);
+        mName.setText(name);
+        mAmount.setText(formatAmount(amount));
         // Third, append view (entry) onto date's entries
         holder.dateEntries.addView(view);
+        // Fourth, add onLongClickListener
+        mName.setOnClickListener(getOnClickListener(name, amount));
     }
 
     private String formatAmount(String amount) {
         return String.format("%,d", Long.parseLong(amount)) + " KRW";
     }
 
-       /* String entry = list.get(position);
-        final String[] output = entry.split(" = ");
-        holder.english.setText(output[0]);
-        if (checkBoxVisibility) {
-            holder.visibility.setVisibility(View.VISIBLE);
-        } else {
-            holder.visibility.setVisibility(View.INVISIBLE);
-        }
-        int backupLastPos = lastPosition;
-        if (visibilityArray.get(position)) {
-            holder.visibility.setChecked(true);
-            holder.korean.setText(output[1]);
-        } else {
-            holder.visibility.setChecked(false);
-            holder.korean.setText("");
-        }
-        lastPosition = backupLastPos;
-        holder.visibility.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                int h_position = holder.getAdapterPosition();
-                if (buttonView.isChecked()) {
-                    holder.korean.setText(output[1]);
-                    visibilityArray.set(h_position, true);
-                } else {
-                    holder.korean.setText("");
-                    visibilityArray.set(h_position, false);
-                }
-                if (h_position == visibilityArray.size() - 1) {
-                    lastPosition = -1;
-                } else {
-                    lastPosition = h_position;
-                }
+    @Override
+    // Tells adapter how many entries are in list. If 0 then recycler view will be empty
+    public int getItemCount() {
+        return isExpenses ? chronologicalList.size() : list.size();
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder { // holds each entry in memory
+        // for expenses
+        TextView date;
+        TextView dateTotal;
+        LinearLayout dateEntries;
+
+        // for shopping
+        TextView name;
+        TextView amount;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            if (isExpenses) {
+                date = itemView.findViewById(R.id.tv_date);
+                dateTotal = itemView.findViewById(R.id.tv_date_total);
+                dateEntries = itemView.findViewById(R.id.ll_date_entries);
+            } else { // SHOPPING
+                name = itemView.findViewById(R.id.tv_name);
+                amount = itemView.findViewById(R.id.tv_amount);
             }
-        });
-        holder.english.setOnClickListener(new View.OnClickListener() {
+        }
+    }
+
+    // TODO: DELETE AND EDIT FEATURE
+    private View.OnClickListener getOnClickListener(final String name, final String amount) {
+        return new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-                builder.setMessage(output[0] + " = " + output[1] + "\n\nWhat do you want to do with it?")
+                builder.setMessage("Name: " + name + "\nAmount: " + amount + "\n\nWhat do you want to do with it?")
                         .setCancelable(true)
                         .setNeutralButton("Nothing", new DialogInterface.OnClickListener() {
                             @Override
@@ -169,12 +178,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 AlertDialog.Builder builder1 = new AlertDialog.Builder(mContext);
-                                builder1.setMessage(output[0] + " = " + output[1] + " will be deleted.")
+                                builder1.setMessage("Name: " + name + "\nAmount: " + amount + "\n\nThis entry will be deleted.")
                                         .setCancelable(true)
                                         .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                performAction(holder.getAdapterPosition(), DELETE, null, null);
+//                                                deleteEntry();
                                             }
                                         })
                                         .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -200,16 +209,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                                         .setPositiveButton("Edit", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                EditText et_englishInput = dialogView.findViewById(R.id.ed_englishInput);
-                                                EditText et_koreanInput = dialogView.findViewById(R.id.ed_koreanInput);
-                                                String englishInput = et_englishInput.getText().toString();
-                                                String koreanInput = et_koreanInput.getText().toString();
-
-                                                if (englishInput.equals("") || koreanInput.equals("")) {
-                                                    Toast.makeText(mContext, "Invalid input. Entry not edited", Toast.LENGTH_SHORT).show();
-                                                } else {
-                                                    performAction(holder.getAdapterPosition(), EDIT, englishInput, koreanInput);
-                                                }
+                                                EditText mNewName = dialogView.findViewById(R.id.ed_new_name);
+                                                EditText mNewAmount = dialogView.findViewById(R.id.ed_new_amount);
+                                                String newName = mNewName.getText().toString().trim();
+                                                String newAmount = mNewAmount.getText().toString().trim();
+//                                                validateInput();
+//                                                editEntry();
                                                 dialog.dismiss();
                                             }
                                         })
@@ -224,9 +229,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                         });
                 builder.create().show();
             }
-        });
+        };
     }
 
+    /*
     // action can be either edit or delete
     private void performAction(int position, int action, String englishInput, String koreanInput) {
         String entry = vocabList.get(position);
@@ -277,62 +283,5 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             }
         }
     }
-
-    public void toggleAll(boolean toggleTo) {
-        Collections.fill(visibilityArray, toggleTo);
-        notifyDataSetChanged();
-        lastPosition = -1;
-    }
-
-    public void toggleAfterLastPosition() {
-        if (visibilityArray.isEmpty()) {
-            Toast.makeText(mContext, filename + " is empty!", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (visibilityArray.get(lastPosition + 1)) {
-            visibilityArray.set(lastPosition + 1, false);
-        } else {
-            visibilityArray.set(lastPosition + 1, true);
-        }
-        notifyItemChanged(lastPosition + 1);
-        if (lastPosition + 1 == vocabList.size() - 1) {
-            lastPosition = -1;
-        } else {
-            lastPosition++;
-        }
-    }
-
-    public void setCheckBoxVisibility(boolean checkBoxVisibility) {
-        this.checkBoxVisibility = checkBoxVisibility;
-        this.notifyDataSetChanged();
-    } */
-
-    @Override
-    // Tells adapter how many entries are in list. If 0 then recycler view will be empty
-    public int getItemCount() {
-        return isExpenses ? chronologicalList.size() : list.size();
-    }
-
-    public class ViewHolder extends RecyclerView.ViewHolder { // holds each entry in memory
-        // for expenses
-        TextView date;
-        TextView dateTotal;
-        LinearLayout dateEntries;
-
-        // for shopping
-        TextView name;
-        TextView amount;
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            if (isExpenses) {
-                date = itemView.findViewById(R.id.tv_date);
-                dateTotal = itemView.findViewById(R.id.tv_date_total);
-                dateEntries = itemView.findViewById(R.id.ll_date_entries);
-            } else { // SHOPPING
-                name = itemView.findViewById(R.id.tv_name);
-                amount = itemView.findViewById(R.id.tv_amount);
-            }
-        }
-    }
+*/
 }
