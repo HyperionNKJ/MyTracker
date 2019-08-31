@@ -21,16 +21,16 @@ import java.util.Map;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
     private Context mContext;
-    private List<String> list; // if shopping list, use this as recycler array
+    private List<Entry> list; // if shopping list, use this as recycler array
 
     private boolean isExpenses;
-    private List<Map.Entry<String, List<String>>> chronologicalList; // if expenses list, use this as recycler array
+    private List<Map.Entry<String, List<Entry>>> chronologicalList; // if expenses list, use this as recycler array
 
     private static final int DELETE = 0;
     private static final int EDIT = 1;
 
     // list is either Expense list or Shopping list. Corresponding filename = "Expenses List / Shopping List"
-    public RecyclerViewAdapter(Context mContext, List<String> list, String filename) {
+    public RecyclerViewAdapter(Context mContext, List<Entry> list, String filename) {
         this.mContext = mContext;
         this.list = list;
         this.isExpenses = filename.equals("Expenses List");
@@ -40,18 +40,14 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
    /* Group entries of similar date together in expense list
-    * Each expense entry is of the format 'Kimchi Rameon = 1800 == 31-08-2019'
-    * Hence, Use ' == ' delimiter to extract date and ' = ' to separate name and amount
+    * Each expense entry is of the format 'Fried Rice = 6000 = 31-08-2019 = 22-57-24'
     */
     private void initializeChronologicalList() {
-        Map<String, List<String>> chronologicalMap = new LinkedHashMap<>(); // Key = date, Value = entries dated 'date'
-        for (String entryWithDate : list) {
-            String[] output = entryWithDate.split(" == ");
-            String date = output[1]; // '31-08-2019'
-            String entry = output[0]; // 'Kimchi Rameon = 1800'
-
+        Map<String, List<Entry>> chronologicalMap = new LinkedHashMap<>(); // Key = date, Value = entries dated 'date'
+        for (Entry entry : list) {
+            String date = entry.getDate();
             if (!chronologicalMap.containsKey(date)) {
-                List<String> similarDateEntries = new ArrayList<>();
+                List<Entry> similarDateEntries = new ArrayList<>();
                 similarDateEntries.add(entry);
                 chronologicalMap.put(date, similarDateEntries);
             } else {
@@ -76,59 +72,46 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
      * FOR EXPENSES:
      *      Array -> chronologicalList
      *      Row Layout -> R.layout.recycler_row_expenses
-     *      Entry format -> 'PineApple = 15000 == 30-08-2019'
      * FOR SHOPPING:
      *      Array -> list
      *      Row Layout -> R.layout.recycler_row_shopping
-     *      Entry format -> 'Wall Hook = 3'
      */
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         if (isExpenses) {
-            Map.Entry<String, List<String>> dateEntriesPair = chronologicalList.get(position);
+            Map.Entry<String, List<Entry>> dateEntriesPair = chronologicalList.get(position);
             String date = dateEntriesPair.getKey();
-            List<String> entries = dateEntriesPair.getValue();
+            List<Entry> entries = dateEntriesPair.getValue();
 
             holder.date.setText(date);
 
             long dateTotalExpenses = 0;
-            for (String entry : entries) {
-                String[] output = entry.split(" = "); // e.g. 'Kimchi Rameon = 1800'
-                String name = output[0]; // 'Kimchi Rameon'
-                String amount = output[1]; // '1800'
-
-                appendEntryUnderDate(name, amount, holder);
-                dateTotalExpenses += Long.parseLong(amount);
+            for (Entry entry : entries) {
+                appendEntryUnderDate(entry, holder);
+                dateTotalExpenses += Long.parseLong(entry.getAmount());
             }
 
-            holder.dateTotal.setText("Total: " + formatAmount(String.valueOf(dateTotalExpenses)));
+            holder.dateTotal.setText("Total: " + Entry.formatAmount(String.valueOf(dateTotalExpenses)));
         } else { // SHOPPING
-            String entry = list.get(position);
-            String[] output = entry.split(" = ");
-            String name = output[0];
-            String amount = (output.length == 2) ? output[1] : ""; // amount could be empty, because 'space' is allowed
+            Entry entry = list.get(position);
 
-            holder.name.setText(name);
-            holder.amount.setText(amount);
-            holder.name.setOnClickListener(getOnClickListener(name, amount));
+            holder.name.setText(entry.getName());
+            holder.amount.setText(entry.getAmount());
+            holder.name.setOnClickListener(getOnClickListener(entry));
         }
     }
 
-    private void appendEntryUnderDate(String name, String amount, final ViewHolder holder) {
+    private void appendEntryUnderDate(Entry entry, final ViewHolder holder) {
         // First, get the view by reusing recycler_row_shopping's layout
         View view = LayoutInflater.from(mContext).inflate(R.layout.recycler_row_shopping, holder.dateEntries, false);
         // Second, initialize and set name and amount
         TextView mName = view.findViewById(R.id.tv_name);
         TextView mAmount = view.findViewById(R.id.tv_amount);
-        mName.setText(name);
-        mAmount.setText(formatAmount(amount));
+        mName.setText(entry.getName());
+        mAmount.setText(entry.getFormattedAmount());
         // Third, append view (entry) onto date's entries
         holder.dateEntries.addView(view);
         // Fourth, add onLongClickListener
-        mName.setOnClickListener(getOnClickListener(name, amount));
-    }
-
-    private String formatAmount(String amount) {
-        return String.format("%,d", Long.parseLong(amount)) + " KRW";
+        mName.setOnClickListener(getOnClickListener(entry));
     }
 
     @Override
@@ -161,10 +144,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     // TODO: DELETE AND EDIT FEATURE
-    private View.OnClickListener getOnClickListener(final String name, final String amount) {
+    private View.OnClickListener getOnClickListener(final Entry entry) {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                final String name = entry.getName();
+                final String amount = entry.getAmount();
                 AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
                 builder.setMessage("Name: " + name + "\nAmount: " + amount + "\n\nWhat do you want to do with it?")
                         .setCancelable(true)

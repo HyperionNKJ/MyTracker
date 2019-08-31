@@ -75,7 +75,7 @@ public class TrackerActivity extends AppCompatActivity {
                 BufferedReader br = new BufferedReader(isr);
                 String entry;
                 while ((entry = br.readLine()) != null) {
-                    p.appendToList(entry);
+                    p.appendToList(new Entry(entry));
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();

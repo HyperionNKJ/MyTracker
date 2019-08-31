@@ -6,7 +6,7 @@ public class Page {
     private String filename;
     private int layoutResId;
     private int rvId;
-    private ArrayList<String> list; // Either expense or shopping list
+    private ArrayList<Entry> list; // Either expense or shopping list
 
     public Page(String filename, int layoutResId, int rvId) {
         this.filename = filename;
@@ -15,7 +15,7 @@ public class Page {
         this.list = new ArrayList<>();
     }
 
-    public void appendToList(String entry) {
+    public void appendToList(Entry entry) {
         list.add(entry);
     }
 
@@ -31,7 +31,7 @@ public class Page {
         return rvId;
     }
 
-    public ArrayList<String> getList() {
+    public ArrayList<Entry> getList() {
         return list;
     }
 }

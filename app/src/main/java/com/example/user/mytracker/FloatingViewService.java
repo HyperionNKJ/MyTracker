@@ -12,7 +12,7 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -178,11 +178,14 @@ public class FloatingViewService extends Service implements View.OnClickListener
         try {
             if (isExpensesChecked()) {
                 fos = openFileOutput("Expenses List", MODE_APPEND);
-                fos.write((name + " = " + amount + " == " + getDate() + "\n").getBytes());
+                fos.write((name + " = " + amount + " = " + getDateTime() + "\n").getBytes());
                 Toast.makeText(this, "Added to expenses list!\nYou bought '" + name + "' for " + amount + " KRW", Toast.LENGTH_LONG).show();
             } else {
                 fos = openFileOutput("Shopping List", MODE_APPEND);
-                fos.write((name + " = " + amount + "\n").getBytes());
+                if (amount.equals("")) { // happens when amount input is space
+                    amount = " ";
+                }
+                fos.write((name + " = " + amount + " = " + getDateTime() + "\n").getBytes());
                 Toast.makeText(this, "Added to shopping list!\nYou will be buying " + amount + " '" + name + "'", Toast.LENGTH_LONG).show();
             }
         } catch (FileNotFoundException e) {
@@ -200,8 +203,8 @@ public class FloatingViewService extends Service implements View.OnClickListener
         }
     }
 
-    private String getDate() {
-        DateTimeFormatter formatter = DateTimeFormat.forPattern("dd-MM-yyyy").withLocale(Locale.KOREA);
-        return formatter.print(new LocalDate());
+    private String getDateTime() {
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("dd-MM-yyyy = HH-mm-ss").withLocale(Locale.KOREA);
+        return formatter.print(new LocalDateTime());
     }
 }
