@@ -78,6 +78,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
      */
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         if (isExpenses) {
+            holder.dateEntries.removeAllViews(); // to prevent entries duplicating
             Map.Entry<String, List<Entry>> dateEntriesPair = chronologicalList.get(position);
             String date = dateEntriesPair.getKey();
             List<Entry> entries = dateEntriesPair.getValue();
