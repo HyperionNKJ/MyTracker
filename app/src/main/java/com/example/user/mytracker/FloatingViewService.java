@@ -138,18 +138,27 @@ public class FloatingViewService extends Service implements View.OnClickListener
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.closeButtonCollapsed:
-                //closing the widget
                 stopSelf();
                 break;
             case R.id.addButton:
-                if (hasEmptyInput()) {
-                    Toast.makeText(this, "Please include both name and amount", Toast.LENGTH_SHORT).show();
-                } else if (isNonNumerical(amountInput.getText().toString())) {
-                    Toast.makeText(this, "Amount should be a number", Toast.LENGTH_SHORT).show();
-                } else {
-                    addEntry();
-                }
+                validateInput();
                 break;
+        }
+    }
+
+    // For expenses amount, Only numbers, no negative, no decimals, no commas
+    private void validateInput() {
+        String inputAmount = amountInput.getText().toString();
+        boolean isExpenses = isExpensesChecked();
+
+        if (hasEmptyInput()) {
+            Toast.makeText(this, "Please include both name and amount", Toast.LENGTH_SHORT).show();
+        } else if (isExpenses && !inputAmount.matches("^ *[0-9]+ *$")) {
+            Toast.makeText(this, "Amount should be a non-negative integer without comma", Toast.LENGTH_SHORT).show();
+        } else if (!isExpenses && !inputAmount.matches("^ *[\\p{Alnum} ]+ *$")) {
+            Toast.makeText(this, "Amount should be alphanumeric (including space)", Toast.LENGTH_SHORT).show();
+        } else {
+            addEntry();
         }
     }
 
@@ -157,13 +166,8 @@ public class FloatingViewService extends Service implements View.OnClickListener
         return nameInput.getText().toString().equals("") || amountInput.getText().toString().equals("");
     }
 
-    private boolean isNonNumerical(String s) {
-        try {
-            Double.parseDouble(s);
-        } catch (NumberFormatException e) {
-            return true;
-        }
-        return false;
+    private boolean isExpensesChecked() {
+        return trackerTypeRG.getCheckedRadioButtonId() == R.id.rb_expenses;
     }
 
     private void addEntry() {
@@ -172,7 +176,7 @@ public class FloatingViewService extends Service implements View.OnClickListener
         FileOutputStream fos = null;
 
         try {
-            if (trackerTypeRG.getCheckedRadioButtonId() == R.id.rb_expenses) {
+            if (isExpensesChecked()) {
                 fos = openFileOutput("Expenses List", MODE_APPEND);
                 fos.write((name + " = " + amount + " == " + getDate() + "\n").getBytes());
                 Toast.makeText(this, "Added to expenses list!\nYou bought '" + name + "' for " + amount + " KRW", Toast.LENGTH_LONG).show();

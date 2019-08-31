@@ -85,14 +85,14 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
             holder.date.setText(date);
 
-            double dateTotalExpenses = 0;
+            long dateTotalExpenses = 0;
             for (String entry : entries) {
                 String[] output = entry.split(" = "); // e.g. 'Kimchi Rameon = 1800'
                 String name = output[0]; // 'Kimchi Rameon'
                 String amount = output[1]; // '1800'
 
                 appendEntryUnderDate(name, amount, holder);
-                dateTotalExpenses += Double.parseDouble(amount);
+                dateTotalExpenses += Long.parseLong(amount);
             }
 
             holder.dateTotal.setText("Total: " + formatAmount(String.valueOf(dateTotalExpenses)));
@@ -100,7 +100,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             String entry = list.get(position);
             String[] output = entry.split(" = ");
             holder.name.setText(output[0]);
-            holder.amount.setText(formatAmount(output[1]));
+            holder.amount.setText((output.length == 2) ? output[1] : ""); // amount could be empty, because 'space' is allowed
         }
     }
 
@@ -115,7 +115,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     private String formatAmount(String amount) {
-        return String.format("%,d", Math.round(Double.parseDouble(amount))) + " KRW";
+        return String.format("%,d", Long.parseLong(amount)) + " KRW";
     }
 
        /* String entry = list.get(position);

@@ -33,7 +33,10 @@ public class PagerAdapter extends android.support.v4.view.PagerAdapter{
         final RecyclerViewAdapter recyclerViewAdapter = new RecyclerViewAdapter(context, currentPage.getList(), currentPage.getFilename());
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setAdapter(recyclerViewAdapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(context));
+
+        LinearLayoutManager manager = new LinearLayoutManager(context);
+        mRecyclerView.setLayoutManager(manager);
+        manager.smoothScrollToPosition(mRecyclerView, null, currentPage.getList().size());
 
         view.setTag(position);
         container.addView(view);
