@@ -3,7 +3,9 @@ package com.example.user.mytracker;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -141,29 +143,56 @@ public class FloatingViewService extends Service implements View.OnClickListener
                 stopSelf();
                 break;
             case R.id.addButton:
-                validateInput();
+                if (isValidInput()) {
+                    disableButtonForXSeconds(v); // needed to prevent accidental double add which will mean same time stamp
+                    addEntry();
+                }
                 break;
         }
     }
 
+    private void disableButtonForXSeconds(final View button) {
+        button.setEnabled(false);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                button.setEnabled(true);
+            }
+        },1200);// set time as per your requirement
+    }
+
     // For expenses amount, Only numbers, no negative, no decimals, no commas
-    private void validateInput() {
+    private boolean isValidInput() {
         String inputAmount = amountInput.getText().toString();
         boolean isExpenses = isExpensesChecked();
 
         if (hasEmptyInput()) {
             Toast.makeText(this, "Please include both name and amount", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (hasCarriageReturn()) {
+            Toast.makeText(this, "Input should be within a single line", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (!nameInput.getText().toString().matches(".*[a-zA-Z]+.*")) {
+            Toast.makeText(this, "Name should consist at least an alphabet", Toast.LENGTH_SHORT).show();
+            return false;
         } else if (isExpenses && !inputAmount.matches("^ *[0-9]+ *$")) {
             Toast.makeText(this, "Amount should be a non-negative integer without comma", Toast.LENGTH_SHORT).show();
+            return false;
         } else if (!isExpenses && !inputAmount.matches("^ *[\\p{Alnum} ]+ *$")) {
             Toast.makeText(this, "Amount should be alphanumeric (including space)", Toast.LENGTH_SHORT).show();
-        } else {
-            addEntry();
+            return false;
         }
+        return true;
     }
 
     private boolean hasEmptyInput() {
         return nameInput.getText().toString().equals("") || amountInput.getText().toString().equals("");
+    }
+
+    private boolean hasCarriageReturn() {
+        String inputName = nameInput.getText().toString();
+        String inputAmount = amountInput.getText().toString();
+        return inputName.contains("\n") || inputName.contains("\r") || inputAmount.contains("\n") || inputAmount.contains("\r");
     }
 
     private boolean isExpensesChecked() {

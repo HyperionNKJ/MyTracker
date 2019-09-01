@@ -13,26 +13,39 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
     private Context mContext;
     private List<Entry> list; // if shopping list, use this as recycler array
 
     private boolean isExpenses;
+    private String fileName;
     private List<Map.Entry<String, List<Entry>>> chronologicalList; // if expenses list, use this as recycler array
 
     private static final int DELETE = 0;
     private static final int EDIT = 1;
+    private static final int EXPENSE = 2;
+    private static final int SHOPPING = 3;
 
     // list is either Expense list or Shopping list. Corresponding filename = "Expenses List / Shopping List"
     public RecyclerViewAdapter(Context mContext, List<Entry> list, String filename) {
         this.mContext = mContext;
         this.list = list;
+        this.fileName = filename;
         this.isExpenses = filename.equals("Expenses List");
         if (isExpenses) {
             initializeChronologicalList();
@@ -169,7 +182,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                                         .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-//                                                deleteEntry();
+                                                performAction(entry, DELETE);
                                             }
                                         })
                                         .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -189,6 +202,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                                 AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
                                 LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
                                 final View dialogView = inflater.inflate(R.layout.edit_dialog, null);
+                                ((EditText) dialogView.findViewById(R.id.ed_new_name)).setText(entry.getName());
+                                ((EditText) dialogView.findViewById(R.id.ed_new_amount)).setText(entry.getAmount());
 
                                 builder.setCancelable(true)
                                         .setView(dialogView)
@@ -197,10 +212,18 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                                             public void onClick(DialogInterface dialog, int which) {
                                                 EditText mNewName = dialogView.findViewById(R.id.ed_new_name);
                                                 EditText mNewAmount = dialogView.findViewById(R.id.ed_new_amount);
-                                                String newName = mNewName.getText().toString().trim();
-                                                String newAmount = mNewAmount.getText().toString().trim();
-//                                                validateInput();
-//                                                editEntry();
+                                                String newName = mNewName.getText().toString();
+                                                String newAmount = mNewAmount.getText().toString();
+
+                                                if (isValidInput(newName, newAmount)) {
+                                                    entry.setName(newName.trim());
+                                                    String trimmedAmount = newAmount.trim();
+                                                    if (trimmedAmount.equals("")) { // happens when amount input is space
+                                                        trimmedAmount = " ";
+                                                    }
+                                                    entry.setAmount(trimmedAmount);
+                                                    performAction(entry, EDIT);
+                                                }
                                                 dialog.dismiss();
                                             }
                                         })
@@ -218,43 +241,112 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         };
     }
 
-    /*
-    // action can be either edit or delete
-    private void performAction(int position, int action, String englishInput, String koreanInput) {
-        String entry = vocabList.get(position);
+    private boolean isValidInput(String inputName, String inputAmount) {
+        if (inputName.equals("") || inputAmount.equals("")) {
+            Toast.makeText(mContext, "Edit unsuccessful\nPlease include both name and amount", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (inputName.contains("\n") || inputName.contains("\r") || inputAmount.contains("\n") || inputAmount.contains("\r")) {
+            Toast.makeText(mContext, "Edit unsuccessful\nInput should be within a single line", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (!inputName.matches(".*[a-zA-Z]+.*")) {
+            Toast.makeText(mContext, "Name should consist at least an alphabet", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (isExpenses && !inputAmount.matches("^ *[0-9]+ *$")) {
+            Toast.makeText(mContext, "Edit unsuccessful\nAmount should be a non-negative integer without comma", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (!isExpenses && !inputAmount.matches("^ *[\\p{Alnum} ]+ *$")) {
+            Toast.makeText(mContext, "Edit unsuccessful\nAmount should be alphanumeric (including space)", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    private void performAction (Entry entry, int action) {
+        String actionString = (action == DELETE) ? "deleted" : "edited";
+        try {
+            updateArray(entry, action);
+            notifyDataSetChanged();
+            updateFile(entry, action);
+        } catch (Exception e) {
+            Toast.makeText(mContext, "Entry not " + actionString + ". Something went wrong!", Toast.LENGTH_SHORT).show();
+        }
+        Toast.makeText(mContext, "Entry " + actionString, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateArray(Entry entry, int action)  {
+        if (isExpenses) {
+            updateChronologicalList(entry, action);
+        }
+        updateList(entry, action);
+    }
+
+    // List<Map.Entry<String, List<Entry>>> ChronologicalList
+    private void updateChronologicalList(Entry entry, int action) {
+        int dateIndex = findEntryIndexInChronologicalList(entry);
+        List<Entry> entries = chronologicalList.get(dateIndex).getValue();
+        int entryIndex = findEntryIndexInList(entry, entries);
 
         if (action == DELETE) {
-            vocabList.remove(position);
-            visibilityArray.remove(position);
-            this.notifyItemRemoved(position);
+            entries.remove(entryIndex);
         } else if (action == EDIT) {
-            vocabList.set(position, englishInput + " = " + koreanInput);
-            this.notifyDataSetChanged();
+            entries.set(entryIndex, entry);
         }
+        chronologicalList.get(dateIndex).setValue(entries);
+    }
 
-        // edit or delete from file
-        StringBuilder sb = new StringBuilder();
+    private void updateList(Entry entry, int action) {
+        int entryIndex = findEntryIndexInList(entry, list);
+        if (action == DELETE) {
+            list.remove(entryIndex);
+        } else if (action == EDIT) {
+            list.set(entryIndex, entry);
+        }
+    }
+
+    private int findEntryIndexInChronologicalList(Entry entry) {
+        String entryDate = entry.getDate();
+        for (int i = 0; i < chronologicalList.size(); i++) {
+            if (chronologicalList.get(i).getKey().equals(entryDate)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // uses dateTime which is a unique identifier for entries
+    private int findEntryIndexInList(Entry target, List<Entry> list) {
+        for (int i = 0; i < list.size(); i ++) {
+            if (list.get(i).getDateTime().equals(target.getDateTime())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void updateFile(Entry target, int action) {
+        StringBuilder updatedContentString = new StringBuilder();
         FileInputStream fis;
         FileOutputStream fos = null;
 
         try {
-            fis = mContext.openFileInput(filename);
+            fis = mContext.openFileInput(fileName);
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader br = new BufferedReader(isr);
-            String engKorPair;
-            while ((engKorPair = br.readLine()) != null) {
-                if (engKorPair.equals(entry)) {
+
+            String entry;
+            while ((entry = br.readLine()) != null) {
+                if (target.isEquals(entry)) {
                     if (action == DELETE) {
                         continue;
                     } else if (action == EDIT) {
-                        sb.append(englishInput).append(" = ").append(koreanInput).append("\n");
+                        updatedContentString.append(target.getRawEntryString()).append("\n");
                         continue;
                     }
                 }
-                sb.append(engKorPair).append("\n");
+                updatedContentString.append(entry).append("\n");
             }
-            fos = mContext.openFileOutput(filename, MODE_PRIVATE);
-            fos.write(sb.toString().getBytes());
+            fos = mContext.openFileOutput(fileName, MODE_PRIVATE);
+            fos.write(updatedContentString.toString().getBytes());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e1) {
@@ -269,5 +361,4 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             }
         }
     }
-*/
 }

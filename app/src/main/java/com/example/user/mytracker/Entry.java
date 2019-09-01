@@ -46,4 +46,15 @@ public class Entry {
     public String getDateTime() {
         return dateTime;
     }
+
+    public boolean isEquals(String rawEntry) {
+        String[] output = rawEntry.split(" = ");
+        String rawEntryDateTime = output[2] + "," + output[3];
+        return this.dateTime.equals(rawEntryDateTime);
+    }
+
+    public String getRawEntryString() {
+        String[] output = dateTime.split(",");
+        return name + " = " + amount + " = " + output[0] + " = " + output[1];
+    }
 }
