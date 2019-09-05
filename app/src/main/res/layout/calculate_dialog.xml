@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:paddingLeft="15dp"
+    android:paddingRight="15dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:gravity="center"
+    android:background="@drawable/calculate_dialog_background">
+
+    <LinearLayout
+        android:id="@+id/cal_budget_linear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="95dp"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:text="Budget :"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/cal_budget"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:textIsSelectable="true"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            tools:text="6,949,000 KRW" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cal_expenses_linear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="95dp"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:text="Expenses :"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/cal_expenses"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:textIsSelectable="true"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            tools:text="582,780 KRW" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cal_remaining_linear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="95dp"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:text="Remaining :"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/cal_remaining"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:textIsSelectable="true"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            tools:text="6,366,220 KRW" />
+    </LinearLayout>
+
+    <!-- In this button, we use tag to track currency-->
+    <Button
+        android:id="@+id/cal_currency"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="5dp"
+        android:text="Switch Currency"
+        android:tag="KRW"
+        android:textSize="13sp"/>
+</LinearLayout>

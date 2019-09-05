@@ -38,8 +38,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     private static final int DELETE = 0;
     private static final int EDIT = 1;
-    private static final int EXPENSE = 2;
-    private static final int SHOPPING = 3;
 
     // list is either Expense list or Shopping list. Corresponding filename = "Expenses List / Shopping List"
     public RecyclerViewAdapter(Context mContext, List<Entry> list, String filename) {
@@ -157,7 +155,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
-    // TODO: DELETE AND EDIT FEATURE
     private View.OnClickListener getOnClickListener(final Entry entry) {
         return new View.OnClickListener() {
             @Override
