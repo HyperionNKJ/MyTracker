@@ -208,14 +208,14 @@ public class FloatingViewService extends Service implements View.OnClickListener
             if (isExpensesChecked()) {
                 fos = openFileOutput("Expenses List", MODE_APPEND);
                 fos.write((name + " = " + amount + " = " + getDateTime() + "\n").getBytes());
-                Toast.makeText(this, "Added to expenses list!\nYou bought '" + name + "' for " + amount + " KRW", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Added to expenses list!\nYou bought '" + name + "' for " + amount + " KRW", Toast.LENGTH_SHORT).show();
             } else {
                 fos = openFileOutput("Shopping List", MODE_APPEND);
                 if (amount.equals("")) { // happens when amount input is space
                     amount = " ";
                 }
                 fos.write((name + " = " + amount + " = " + getDateTime() + "\n").getBytes());
-                Toast.makeText(this, "Added to shopping list!\nYou will be buying " + amount + " '" + name + "'", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Added to shopping list!\nYou will be buying " + amount + " '" + name + "'", Toast.LENGTH_SHORT).show();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();

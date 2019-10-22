@@ -36,10 +36,10 @@
 
             <ImageView
                 android:id="@+id/closeButtonCollapsed"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:layout_marginLeft="47dp"
-                android:src="@drawable/circle_close" />
+                android:src="@drawable/list_view_close" />
         </RelativeLayout>
 
         <!-- this is the expanded layout -->
